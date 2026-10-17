@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>카프카 퀘스트</title>
+<meta name="description" content="메시지가 되어 프로듀서 발사대에서 파티션 레인으로 날아가며 배우는 Kafka. 오프셋·파티션·커밋·복제부터 재시도·DLQ·리밸런싱·랙·멱등·컴팩션까지">
+<meta property="og:title" content="카프카 퀘스트">
+<meta property="og:description" content="내가 메시지가 되어 날아가는 Kafka 학습 게임. 기본편 4장 + 심화편 6장">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Do+Hyeon&family=IBM+Plex+Sans+KR:wght@400;500;700&display=swap">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<canvas id="world" aria-label="게임 화면. 레인을 누르면 조준하고, 발사대를 누르면 발사합니다"></canvas>
+
+<header id="hud">
+  <section class="panel quest" aria-live="polite">
+    <div class="ch" id="chTitle">카프카 퀘스트</div>
+    <div class="goal"><span class="tag">목표</span><b id="goal">-</b></div>
+    <div class="hearts" id="hearts" aria-label="하트"></div>
+  </section>
+  <nav class="hud-btns">
+    <button type="button" id="menuBtn">장 선택</button>
+    <button type="button" id="helpBtn">조작법</button>
+  </nav>
+</header>
+
+<div id="conf" class="inv" aria-label="현재 설정"></div>
+<div id="tools" class="tools" hidden></div>
+<div id="toast" class="toast" role="status"></div>
+
+<div class="pad" id="pad" hidden>
+  <button type="button" id="upBtn" class="padBtn" aria-label="위 레인">▲</button>
+  <button type="button" id="downBtn" class="padBtn" aria-label="아래 레인">▼</button>
+</div>
+<button type="button" id="fireBtn" class="fire" hidden>발사</button>
+
+<section id="dialog" class="dialog" hidden>
+  <div class="who" id="dlgWho"></div>
+  <div class="text" id="dlgText"></div>
+  <div class="choices" id="dlgChoices"></div>
+  <div class="more" id="dlgMore">▼</div>
+</section>
+
+<div id="overlay" class="overlay" hidden>
+  <div class="card" id="card"></div>
+</div>
+
+<script src="quests.js"></script>
+<script src="game.js"></script>
+</body>
+</html>
