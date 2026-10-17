@@ -32,7 +32,7 @@ button { font: inherit; color: inherit; cursor: pointer; }
 .goal { font-size: 14px; line-height: 1.4; display: flex; gap: 8px; align-items: baseline; }
 .goal b { font-weight: 500; }
 .tag { flex: none; font-size: 11px; background: var(--panel-line); color: #fff; border-radius: 3px; padding: 1px 5px; letter-spacing: .06em; }
-.hearts { font-size: 15px; letter-spacing: 2px; color: var(--bad); }
+.hearts { font-size: 12px; color: var(--muted); }
 .hearts .lost { color: #4a5175; }
 .hud-btns { display: flex; gap: 6px; pointer-events: auto; flex-wrap: wrap; justify-content: flex-end; }
 .hud-btns button { background: var(--panel); border: 2px solid var(--panel-line); border-radius: 6px; padding: 6px 10px; font-family: var(--f-display); font-size: 15px; }

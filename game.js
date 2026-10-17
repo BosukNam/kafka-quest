@@ -75,14 +75,14 @@
   function addConsumer(group = "A", silent = false) {
     const n = world.consumers.filter(c => c.kind === "group" && c.group === group).length + 1;
     const c = { id: world.consSeq++, group, kind: "group", name: group === "A" ? "로봇 " + n : "배송팀 로봇", color: CONS_COLORS[world.consSeq % CONS_COLORS.length],
-      lanes: [], pos: {}, alive: true, busy: null, procT: 0, retryT: 0, x: L.consX + 80, y: L.top, tx: 0, ty: 0 };
+      lanes: [], pos: {}, alive: true, busy: null, procT: 0, retryT: 0, x: 0, y: 0, tx: 0, ty: 0 };
     world.consumers.push(c);
     if (silent) assign(); else rebalance(c.name + " 참여");
     return c;
   }
   function ensureRetryConsumer() {
     if (world.consumers.some(c => c.kind === "retry")) return;
-    world.consumers.push({ id: world.consSeq++, group: "retry", kind: "retry", name: "재시도 로봇", color: "#ffa94d", lanes: ["retry"], pos: { retry: 0 }, alive: true, busy: null, procT: 0, retryT: 0, x: L.consX + 80, y: L.bottom, tx: 0, ty: 0 });
+    world.consumers.push({ id: world.consSeq++, group: "retry", kind: "retry", name: "재시도 로봇", color: "#ffa94d", lanes: ["retry"], pos: { retry: 0 }, alive: true, busy: null, procT: 0, retryT: 0, x: 0, y: 0, tx: 0, ty: 0 });
   }
   // RangeAssignor 흉내: 파티션을 이어진 덩어리로 나눠 준다. 컨슈머가 더 많으면 뒤쪽은 빈손
   function assign() {
@@ -414,7 +414,7 @@
   }
   async function onWrongDone(m) {
     busy = true; syncUi();
-    await say("땡!", mission.wrong + "  (하트 -1)", "bad");
+    await say("다시 해 볼까요", mission.wrong, "bad");
     const alive = await loseHeart();
     if (!alive) return;
     closeDialog();
@@ -428,7 +428,7 @@
   function renderHud() {
     $("chTitle").textContent = chapter().title;
     $("goal").textContent = state.goal || chapter().intro;
-    $("hearts").innerHTML = "하트 " + Array.from({ length: 5 }, (_, i) => `<span class="${i < state.hearts ? "" : "lost"}">♥</span>`).join("");
+    $("hearts").textContent = "틀려도 괜찮아요. 해설을 읽고 다시 고르면 돼요";
   }
   function renderConf() {
     if (!world) return;
@@ -485,9 +485,8 @@
   function closeDialog() { dlg.hidden = true; advance = null; choicePick = null; choiceMove = null; if ($("overlay").hidden) busy = false; syncUi(); }
   dlg.addEventListener("click", () => advance && advance());
 
-  async function loseHeart() {
-    state.hearts = Math.max(0, state.hearts - 1); renderHud();
-    if (state.hearts === 0) {
+  async function loseHeart() {   // 하트 없음: 틀리면 해설만 보고 다시 한다
+    if (false) {
       closeDialog();
       showCard(`<h2>하트가 다 떨어졌어요</h2><p>괜찮아요. 방금 본 해설을 떠올리면서 이 장을 처음부터 다시 해 봐요.</p>
         <div class="row-btns"><button class="btn primary" id="retryBtn" type="button">이 장 다시 하기</button><button class="btn" id="toMenuH" type="button">장 선택</button></div>`);
@@ -532,8 +531,9 @@
     showCard(`<h1>카프카 퀘스트</h1>
       <p class="sub">당신은 메시지입니다. 프로듀서 발사대에서 토픽의 파티션 레인으로 날아가고, 컨슈머 로봇이 당신을 가져갑니다. 기본편에서 오프셋·파티션·커밋·복제를, 심화편에서 재시도·DLQ·리밸런싱·랙·멱등·컴팩션을 몸으로 익혀요.</p>
       <div class="chapters">${html}</div>
-      <div class="row-btns">${state.inChapter ? `<button class="btn primary" id="resume" type="button">하던 장으로 돌아가기</button>` : ""}<button class="btn" id="howBtn" type="button">조작법</button></div>
-      <p class="foot">진행 상황(완료한 장)은 이 브라우저에만 저장됩니다. 장을 고르면 그 장을 처음부터 시작해요.</p>`);
+      <div class="row-btns">${state.inChapter ? `<button class="btn primary" id="resume" type="button">하던 장으로 돌아가기</button>` : ""}<button class="btn" id="howBtn" type="button">조작법</button><button class="btn" id="glossMenuBtn" type="button">용어 사전</button></div>
+      <p class="foot">진행 상황(완료한 장)은 이 브라우저에만 저장됩니다. 장을 고르면 그 장을 처음부터 시작해요. 틀려도 벌점은 없어요.</p>`);
+    $("glossMenuBtn").onclick = showGlossary;
     $("card").querySelectorAll(".chapters button").forEach(b => b.onclick = () => { state.started = true; startChapter(+b.dataset.i); });
     $("resume")?.addEventListener("click", hideCard);
     $("howBtn").onclick = showHelp;
@@ -546,12 +546,20 @@
         <kbd>퀴즈</kbd><span>방향키로 옮기고 Space 로 고르기, 또는 숫자 1~4</span>
         <kbd>메뉴 · 완료 화면</kbd><span>방향키로 버튼을 옮기고 Space(또는 Enter)로 누르기</span>
         <kbd>화면 위 버튼</kbd><span>8장에서만 '로봇 추가', '레인 추가' 버튼이 나옵니다</span>
+        <kbd>용어</kbd><span>오른쪽 위 '용어' 버튼: 브로커·오프셋·커밋 같은 말의 쉬운 풀이</span>
       </div>
-      <p class="sub">잘못된 레인으로 쏘거나 퀴즈를 틀리면 하트가 하나 줄고 이유를 알려 줘요. 하트 다섯 개를 다 쓰면 그 장을 처음부터 다시 합니다. 지켜보는 단계에서는 그냥 기다리면 돼요.</p>
+      <p class="sub">잘못된 레인으로 쏘거나 퀴즈를 틀려도 벌점은 없어요. 이유를 읽고 다시 고르면 됩니다. 낯선 말은 위쪽 '용어' 버튼으로 언제든 찾아보세요. 지켜보는 단계에서는 그냥 기다리면 돼요.</p>
       <div class="row-btns"><button class="btn primary" id="okHelp" type="button">닫기</button><button class="btn" id="helpMenu" type="button">장 선택</button></div>`);
     $("okHelp").onclick = () => { if (!state.inChapter) showMenu(); else hideCard(); };
     $("helpMenu").onclick = showMenu;
   }
+  function showGlossary() {
+    const groups = window.GLOSSARY.map(g => `<h3>${g.group}</h3><div class="terms"><table><thead><tr><th>말</th><th>게임에서는</th><th>쉬운 풀이</th></tr></thead><tbody>${g.items.map(([a, b, c]) => `<tr><td><b>${a}</b></td><td>${b}</td><td>${c}</td></tr>`).join("")}</tbody></table></div>`).join("");
+    showCard(`<h2>용어 사전</h2><p class="sub">낯선 말이 나오면 여기서 찾아보세요. 게임 속 그림과 짝지어 두었어요.</p>${groups}
+      <div class="row-btns"><button class="btn primary" id="okGloss" type="button">닫기</button></div>`);
+    $("okGloss").onclick = () => { if (!state.inChapter) showMenu(); else hideCard(); };
+  }
+  $("glossBtn").onclick = () => { if (!dlg.hidden) return; showGlossary(); };
   $("menuBtn").onclick = () => { if (!dlg.hidden) return; showMenu(); };
   $("helpBtn").onclick = () => { if (!dlg.hidden) return; showHelp(); };
 
@@ -564,7 +572,9 @@
     makeWorld(ch.world);
     renderHud(); renderTools();
     const token = ++runToken;
+    const words = (ch.words || []).map(([w, d]) => `<tr><td><b>${w}</b></td><td>${d}</td></tr>`).join("");
     showCard(`<h2>${ch.title}</h2><p class="sub">${ch.part}</p><p>${ch.intro}</p>
+      ${words ? `<p class="sub">이 장에 나오는 말 (게임 중에도 '용어' 버튼으로 볼 수 있어요)</p><div class="terms"><table><tbody>${words}</tbody></table></div>` : ""}
       <div class="row-btns"><button class="btn primary" id="goBtn" type="button">출발</button></div>`);
     $("goBtn").onclick = () => { hideCard(); runChapter(token); };
   }
@@ -587,7 +597,7 @@
         if (token !== runToken) return;
         if (pick.ok) { celebrate(); await say("정답!", pick.fb, "ok"); applySet(pick.set); break; }
         shake();
-        await say("땡!", pick.fb + "  (하트 -1)", "bad");
+        await say("아쉬워요", pick.fb + "  다시 골라 볼까요?", "bad");
         if (!(await loseHeart())) return;
       }
       closeDialog(); return;
@@ -840,6 +850,8 @@
       text(label, cx + 10, cy + 14, { size: 13 });
       if (s.key) { ctx.fillStyle = keyColor(s.key); ctx.fillRect(cx + 10, cy + 27, 8, 8); text("키: " + s.key, cx + 22, cy + 31, { size: 11, color: "#aab3dd", font: F_DISPLAY }); }
       ctx.restore();
+      const hint = mission.lanes && mission.lanes.length === 1 ? `힌트: P${mission.lanes[0]} 레인으로` : "아무 레인이나 좋아요";
+      text(hint, cx + w + 8, cy + 14, { size: 12, color: "#ffd43b", font: F_DISPLAY });
       text(L.small ? "▲▼ 조준 · 발사" : "↑↓ 조준 · Space 발사", x - 20, cy - 10, { size: 11, color: "#ffd43b", font: F_DISPLAY });
     }
   }
